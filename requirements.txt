@@ -1,0 +1,14 @@
+# Core Reddit API wrapper (official API via OAuth)
+praw==7.7.1
+
+# Web dashboard
+Flask==3.0.3
+
+# Config parsing
+PyYAML==6.0.2
+
+# Loading secrets from a .env file in local/dev
+python-dotenv==1.0.1
+
+# Testing
+pytest==8.3.3

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Activity · Reddit Helper Bot{% endblock %}
+{% block content %}
+<h1>Activity log</h1>
+{% if recent %}
+<table class="table">
+  <thead><tr><th>When (epoch)</th><th>Sub</th><th>Author</th><th>Rule</th><th>Status</th><th>Link / error</th></tr></thead>
+  <tbody>
+  {% for r in recent %}
+    <tr>
+      <td>{{ r['posted_at']|int }}</td>
+      <td>r/{{ r['subreddit'] }}</td>
+      <td>{{ ('u/' + r['author']) if r['author'] else '—' }}</td>
+      <td>{{ r['rule_id'] or '—' }}</td>
+      <td><span class="badge badge-{{ r['status'] }}">{{ r['status'] }}</span></td>
+      <td>
+        {% if r['permalink'] %}<a href="{{ r['permalink'] }}" target="_blank" rel="noopener">link</a>{% endif %}
+        {% if r['error'] %}<span class="muted">{{ r['error'] }}</span>{% endif %}
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<div class="card"><p class="muted">No activity recorded yet.</p></div>
+{% endif %}
+{% endblock %}

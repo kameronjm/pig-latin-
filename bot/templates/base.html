@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Reddit Helper Bot{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="{{ url_for('index') }}">🤖 Reddit Helper Bot</a>
+    {% if session.get('logged_in') %}
+    <nav>
+      <a href="{{ url_for('index') }}">Dashboard</a>
+      <a href="{{ url_for('review') }}">Review Queue</a>
+      <a href="{{ url_for('activity') }}">Activity</a>
+      <a href="{{ url_for('logout') }}">Log out</a>
+    </nav>
+    {% endif %}
+  </header>
+
+  <main class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flashes">
+          {% for category, message in messages %}
+            <div class="flash flash-{{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    <span>Single-account · clearly labeled · rate-limited · allowlist only</span>
+  </footer>
+</body>
+</html>

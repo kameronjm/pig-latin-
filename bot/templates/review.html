@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Review Queue · Reddit Helper Bot{% endblock %}
+{% block content %}
+<h1>Review queue</h1>
+<p class="muted">Candidate replies matched by your rules. Approve to post (subject to
+rate limits), or reject to discard. {% if config.dry_run %}<strong>Dry run is on</strong> —
+approving records the reply but does not post it.{% endif %}</p>
+
+{% if pending %}
+  {% for item in pending %}
+  <div class="card review-item">
+    <div class="review-head">
+      <span class="chip chip-on">r/{{ item['subreddit'] }}</span>
+      <span>u/{{ item['author'] or '—' }}</span>
+      <span class="muted">rule: <code>{{ item['rule_id'] }}</code></span>
+      {% if item['comment_link'] %}<a href="{{ item['comment_link'] }}" target="_blank" rel="noopener">view comment ↗</a>{% endif %}
+    </div>
+
+    <div class="review-cols">
+      <div>
+        <h3>Their comment</h3>
+        <blockquote>{{ item['comment_body'] }}</blockquote>
+      </div>
+      <div>
+        <h3>Proposed reply</h3>
+        <blockquote class="proposed">{{ item['proposed_body'] }}</blockquote>
+      </div>
+    </div>
+
+    <div class="review-actions">
+      <form method="post" action="{{ url_for('review_decide', item_id=item['id'], action='approve') }}">
+        <button class="btn btn-primary">Approve &amp; post</button>
+      </form>
+      <form method="post" action="{{ url_for('review_decide', item_id=item['id'], action='reject') }}">
+        <button class="btn btn-ghost">Reject</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+{% else %}
+  <div class="card"><p class="muted">Queue is empty. Run a scan from the dashboard.</p></div>
+{% endif %}
+{% endblock %}
