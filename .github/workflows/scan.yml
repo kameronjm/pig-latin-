@@ -1,0 +1,54 @@
+name: Scheduled scan
+
+# Optional "serverless" mode: run the scanner on a schedule using GitHub Actions
+# instead of a long-running host. Because there is no dashboard in this mode, it
+# only makes sense with `review_required: false` in config.yaml. Keep `dry_run`
+# on until you've watched a few runs in the logs.
+#
+# Setup: add these repository secrets (Settings -> Secrets and variables -> Actions):
+#   REDDIT_CLIENT_ID, REDDIT_CLIENT_SECRET, REDDIT_USERNAME,
+#   REDDIT_PASSWORD, REDDIT_USER_AGENT
+#
+# The SQLite state (dedup / rate-limit history) is persisted best-effort via the
+# actions cache. This is not as reliable as a real host; for production use the
+# docker-compose deployment instead.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/30 * * * *"   # every 30 minutes
+
+concurrency:
+  group: reddit-bot-scan
+  cancel-in-progress: false
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements.txt
+
+      - name: Restore bot state
+        uses: actions/cache@v4
+        with:
+          path: data
+          key: bot-state-${{ github.run_id }}
+          restore-keys: |
+            bot-state-
+
+      - name: Prepare config
+        run: |
+          if [ ! -f config.yaml ]; then cp config.example.yaml config.yaml; fi
+
+      - name: Run one scan
+        env:
+          REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
+          REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
+          REDDIT_USERNAME: ${{ secrets.REDDIT_USERNAME }}
+          REDDIT_PASSWORD: ${{ secrets.REDDIT_PASSWORD }}
+          REDDIT_USER_AGENT: ${{ secrets.REDDIT_USER_AGENT }}
+        run: python -m bot.cli scan

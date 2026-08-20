@@ -1,0 +1,28 @@
+# Two services sharing the same code, database volume, and config:
+#   * dashboard — the web UI (review queue, activity, controls)
+#   * scanner   — the background loop that finds comments and posts approved replies
+#
+# Copy .env.example -> .env and config.example.yaml -> config.yaml first.
+services:
+  dashboard:
+    build: .
+    command: python -m bot.cli web --host 0.0.0.0 --port 5000
+    env_file: .env
+    ports:
+      - "127.0.0.1:5000:5000"   # bound to localhost only — put a tunnel/VPN in front
+    volumes:
+      - botdata:/data
+      - ./config.yaml:/app/config.yaml:ro
+    restart: unless-stopped
+
+  scanner:
+    build: .
+    command: python -m bot.cli run --interval 180
+    env_file: .env
+    volumes:
+      - botdata:/data
+      - ./config.yaml:/app/config.yaml:ro
+    restart: unless-stopped
+
+volumes:
+  botdata:

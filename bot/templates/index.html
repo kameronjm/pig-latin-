@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Dashboard</h1>
+
+{% if config.dry_run %}
+  <div class="banner banner-warn">
+    <strong>DRY RUN is ON.</strong> The bot records what it <em>would</em> post but
+    posts nothing. Set <code>dry_run: false</code> in <code>config.yaml</code> to go live.
+  </div>
+{% else %}
+  <div class="banner banner-live">
+    <strong>LIVE.</strong> Approved replies are posted to Reddit.
+  </div>
+{% endif %}
+
+{% if not reddit_ready %}
+  <div class="banner banner-error">
+    Reddit credentials are not configured. Set them in <code>.env</code> to scan or post.
+  </div>
+{% endif %}
+
+<div class="stat-grid">
+  <div class="stat"><span class="stat-num">{{ stats.posted_today }}</span><span class="stat-label">posted (24h)</span></div>
+  <div class="stat"><span class="stat-num">{{ stats.dry_run_today }}</span><span class="stat-label">dry-run (24h)</span></div>
+  <div class="stat"><span class="stat-num">{{ stats.pending_review }}</span><span class="stat-label">awaiting review</span></div>
+  <div class="stat"><span class="stat-num">{{ stats.total_posted }}</span><span class="stat-label">posted all-time</span></div>
+</div>
+
+<div class="card">
+  <div class="row-between">
+    <div>
+      <h2>Configuration</h2>
+      <ul class="kv">
+        <li><span>Mode</span><b>{{ 'Review required' if config.review_required else 'Auto-post' }}</b></li>
+        <li><span>Min seconds between posts</span><b>{{ config.limits.min_seconds_between_replies }}</b></li>
+        <li><span>Daily cap (total)</span><b>{{ config.limits.max_replies_total_per_day }}</b></li>
+        <li><span>Per-user cooldown (h)</span><b>{{ config.limits.per_user_cooldown_hours }}</b></li>
+      </ul>
+    </div>
+    <form method="post" action="{{ url_for('scan_now') }}">
+      <button type="submit" class="btn btn-primary" {{ 'disabled' if not reddit_ready }}>Scan now</button>
+    </form>
+  </div>
+</div>
+
+<div class="two-col">
+  <div class="card">
+    <h2>Allowed subreddits</h2>
+    <ul class="chips">
+      {% for s in config.subreddits %}
+        <li class="chip {{ 'chip-on' if s.enabled else 'chip-off' }}">r/{{ s.name }}</li>
+      {% endfor %}
+    </ul>
+    <p class="muted">The bot only ever acts in enabled subreddits above.</p>
+  </div>
+
+  <div class="card">
+    <h2>Active rules</h2>
+    <ul class="rules">
+      {% for r in config.rules if r.enabled %}
+        <li><code>{{ r.id }}</code> — {{ r.match.any_of|length + r.match.all_of|length }} term(s),
+          {{ r.responses|length }} response variant(s)</li>
+      {% else %}
+        <li class="muted">No enabled rules.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Recent activity</h2>
+  {% if recent %}
+  <table class="table">
+    <thead><tr><th>When</th><th>Sub</th><th>Author</th><th>Rule</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+    {% for r in recent %}
+      <tr>
+        <td>{{ r['posted_at']|int }}</td>
+        <td>r/{{ r['subreddit'] }}</td>
+        <td>{{ ('u/' + r['author']) if r['author'] else '—' }}</td>
+        <td>{{ r['rule_id'] or '—' }}</td>
+        <td><span class="badge badge-{{ r['status'] }}">{{ r['status'] }}</span></td>
+        <td>{% if r['permalink'] %}<a href="{{ r['permalink'] }}" target="_blank" rel="noopener">link</a>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <p class="muted">Nothing yet. Run a scan to get started.</p>
+  {% endif %}
+</div>
+{% endblock %}

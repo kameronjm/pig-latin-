@@ -1,0 +1,134 @@
+# =============================================================================
+# Reddit Helper Bot — behavior configuration
+#
+# Copy this file to `config.yaml` and edit. Secrets (API keys, passwords) do
+# NOT live here — they go in `.env`. This file controls WHAT the bot does.
+#
+# Golden rules baked into the code (you cannot turn these off):
+#   * The bot only ever acts in subreddits listed under `subreddits:` below.
+#   * Every reply gets the disclosure footer appended (see `disclosure`).
+#   * The bot never replies to the same comment twice, and never to itself.
+# =============================================================================
+
+# Global safety switch. While true, the bot logs exactly what it WOULD post but
+# posts nothing. Flip to false only once you've watched a few dry runs and are
+# happy. Start here.
+dry_run: true
+
+# Require a human to approve each candidate reply in the dashboard before it is
+# posted. When false, approved-by-rules candidates post automatically.
+# Recommended: start with true, move to false once you trust the matching.
+review_required: true
+
+# Mandatory bot disclosure. Appended to every reply. Must be non-empty — the
+# code refuses to post without it. Keep it honest and clearly bot-identifying.
+disclosure: >-
+  ^(I am a bot. I post helpful pointers based on keywords. If this reply is
+  unwanted or off-base, reply to let me know and I'll stop. Contact the
+  operator via modmail.)
+
+# -----------------------------------------------------------------------------
+# Rate limiting & politeness (all optional; sensible defaults shown)
+# -----------------------------------------------------------------------------
+limits:
+  # Minimum seconds between any two posted replies (global throttle).
+  min_seconds_between_replies: 120
+  # Max replies the bot will post per subreddit per rolling 24h.
+  max_replies_per_subreddit_per_day: 10
+  # Max replies the bot will post across ALL subreddits per rolling 24h.
+  max_replies_total_per_day: 40
+  # Don't reply to the same Reddit user more than this often (hours).
+  per_user_cooldown_hours: 24
+  # Skip comments older than this many hours (avoid necro-replying).
+  max_comment_age_hours: 24
+  # Skip comments with a score at or below this (likely removed/downvoted).
+  min_comment_score: 1
+  # Optional quiet hours in UTC — bot posts nothing during this window.
+  # Set both to the same value (or omit) to disable.
+  quiet_hours_utc_start: null   # e.g. 3
+  quiet_hours_utc_end: null     # e.g. 11
+
+# -----------------------------------------------------------------------------
+# Global author skip rules
+# -----------------------------------------------------------------------------
+skip:
+  # Never reply to these usernames (case-insensitive). Include your own bot.
+  users: []
+  # Skip authors whose name ends with "bot" / "-bot" / "_bot" (avoid bot loops).
+  skip_bot_authors: true
+  # Skip comments inside locked or archived threads.
+  skip_locked_or_archived: true
+
+# -----------------------------------------------------------------------------
+# Subreddits the bot is allowed to operate in. THIS IS AN ALLOWLIST.
+# The bot will never touch a subreddit not listed here.
+#
+# You are responsible for confirming each subreddit permits bots. Many do not.
+# Check the sidebar / wiki / rules, or ask the mods first.
+# -----------------------------------------------------------------------------
+subreddits:
+  - name: test          # r/test is a safe sandbox to try the bot out
+    enabled: true
+    # Optional per-subreddit override of the global disclosure footer.
+    disclosure: null
+    # Optional per-subreddit cap (falls back to the global cap if null).
+    max_replies_per_day: 5
+
+  - name: BotTown        # example — replace with real bot-friendly subs
+    enabled: false
+
+# -----------------------------------------------------------------------------
+# Rules: keyword -> response. The scanner checks each new comment in the allowed
+# subreddits against these rules. The first matching enabled rule wins.
+#
+# match:
+#   any_of  — list of terms; match if the comment contains ANY (word-boundary,
+#             case-insensitive by default).
+#   all_of  — optional; every term must also be present.
+#   none_of — optional; skip if ANY of these are present.
+#   regex   — optional; a raw regex that must match (advanced).
+#   case_sensitive — optional, default false.
+#
+# responses: one or more reply bodies. The bot rotates through them to avoid
+# posting the exact same text repeatedly. Markdown is supported. The disclosure
+# footer is appended automatically — don't include it here.
+# -----------------------------------------------------------------------------
+rules:
+  - id: praw-question
+    enabled: true
+    subreddits: []          # empty = all allowed subreddits; or restrict here
+    match:
+      any_of:
+        - "how do I use praw"
+        - "praw not working"
+        - "reddit api wrapper"
+      none_of:
+        - "not python"
+    responses:
+      - |
+        It sounds like you're working with PRAW. A couple of pointers that
+        cover most first-time issues:
+
+        - Make sure your app is registered as a **script** app at
+          reddit.com/prefs/apps.
+        - Double-check your `user_agent` string — Reddit rejects generic ones.
+        - The [PRAW docs quick start](https://praw.readthedocs.io/en/stable/getting_started/quick_start.html)
+          walks through auth end to end.
+
+        If you paste the exact error you're hitting, folks here can usually
+        pinpoint it fast.
+
+  - id: subreddit-pointer
+    enabled: true
+    subreddits: []
+    match:
+      any_of:
+        - "where should I post this"
+        - "which subreddit"
+        - "is there a sub for"
+    responses:
+      - |
+        You might get more targeted answers in a more specific community —
+        searching for a subreddit that matches your topic (r/ + the keyword)
+        often surfaces one. If you share what it's about, someone can suggest
+        a good fit.

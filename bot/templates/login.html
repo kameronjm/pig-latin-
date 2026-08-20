@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Log in · Reddit Helper Bot{% endblock %}
+{% block content %}
+<div class="card card-narrow">
+  <h1>Operator log in</h1>
+  <form method="post">
+    <label>Username
+      <input type="text" name="username" autocomplete="username" required autofocus>
+    </label>
+    <label>Password
+      <input type="password" name="password" autocomplete="current-password" required>
+    </label>
+    <button type="submit" class="btn btn-primary">Log in</button>
+  </form>
+  <p class="muted">Set credentials with <code>DASHBOARD_USERNAME</code> and
+    <code>DASHBOARD_PASSWORD</code> in your environment.</p>
+</div>
+{% endblock %}

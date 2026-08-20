@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Error · Reddit Helper Bot{% endblock %}
+{% block content %}
+<div class="card">
+  <h1>Something needs attention</h1>
+  <p>{{ message }}</p>
+  <a class="btn btn-ghost" href="{{ url_for('index') }}">Back to dashboard</a>
+</div>
+{% endblock %}
